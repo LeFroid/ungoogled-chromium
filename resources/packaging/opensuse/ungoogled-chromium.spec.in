@@ -228,10 +228,13 @@ keeplibs=(
     buildtools/third_party/libc++
     buildtools/third_party/libc++abi
     buildtools/third_party/libunwind
+    net/third_party/http2
     chrome/third_party/mozilla_security_manager
     courgette/third_party
     net/third_party/mozilla_security_manager
     net/third_party/nss
+    net/third_party/quic
+    net/third_party/spdy
     third_party/WebKit
     third_party/analytics
     third_party/angle
@@ -290,7 +293,6 @@ keeplibs=(
     third_party/libXNVCtrl
     third_party/libaddressinput
     third_party/libaom
-    third_party/libaom/source/libaom/third_party/x86inc
     third_party/libjingle
     third_party/libphonenumber
     third_party/libsecret
@@ -323,16 +325,20 @@ keeplibs=(
     third_party/pdfium/third_party/libpng16
     third_party/pdfium/third_party/libtiff
     third_party/pdfium/third_party/skia_shared
+    third_party/perfetto
     third_party/ply
     third_party/polymer
     third_party/protobuf
     third_party/protobuf/third_party/six
+    third_party/pyjson5
     third_party/qcms
+    third_party/rnnoise
     third_party/s2cellid
     third_party/sfntly
     third_party/shaderc
     third_party/skia
     third_party/skia/third_party/gif
+    third_party/skia/third_party/skcms
     third_party/skia/third_party/vulkan
     third_party/smhasher
     third_party/spirv-headers
@@ -357,6 +363,7 @@ keeplibs=(
     third_party/woff2
     third_party/zlib/google
     url/third_party/mozilla
+    v8/third_party/antlr4
     v8/src/third_party/valgrind
     v8/src/third_party/utf8-decoder
     v8/third_party/inspector_protocol
