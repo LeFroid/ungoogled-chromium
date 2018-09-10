@@ -9,6 +9,7 @@ Simple package script generator.
 """
 
 import argparse
+import os
 import re
 import shutil
 import string
@@ -139,6 +140,62 @@ def _get_buildkit_copy(package, pkgmeta):
             break
     return None
 
+def _escape_string(value):
+    return value.replace('"', '\\"')
+
+def _get_spec_format_patch_list(config_bundles_dir, patch_stage_dir):
+    """ Returns information about patch files that are fed into the OpenSUSE RPM SPEC file """
+    patch_string = ''
+    patch_list = []
+    with open(config_bundles_dir + '/common/patch_order.list') as series_file:
+        patch_list = series_file.readlines()
+    with open(config_bundles_dir + '/opensuse/patch_order.list') as series_file:
+        temp = series_file.readlines()
+        patch_list.extend(temp)
+    i = 1
+    patch_list_len = len(patch_list)
+    for patch_file in patch_list:
+        if len(patch_file) < 2:
+            patch_list_len = patch_list_len - 1
+            continue
+        # Copy patch into staging dir
+        shutil.copy2('patches/{0}'.format(patch_file[0:len(patch_file)-1]), patch_stage_dir)
+        # Add patch info to SPEC file
+        last_slash_pos = patch_file.rfind('/')
+        patch_file = patch_file[last_slash_pos + 1:]
+        patch_string += 'Patch{0}:         {1}'.format(i, patch_file)
+        i += 1
+    return {'patchString': patch_string, 'numPatches': patch_list_len}
+
+def _get_patch_apply_spec_cmd(num_patches):
+    patch_apply_string = ''
+    for i in range(1, num_patches + 1):
+        patch_apply_string += '%patch{0} -p1\n'.format(i)
+    return patch_apply_string
+
+def _get_gn_flag_map(config_bundles_dir):
+    gn_flags = dict() 
+    def _parse_gn_file(gn_file, gn_flags):
+        for line in gn_file:
+            delim_idx = line.find('=')
+            if delim_idx < 0:
+                continue
+            key = line[0:delim_idx]
+            val = line[delim_idx + 1:len(line) - 1]
+            gn_flags[key] = val
+        return gn_flags
+
+    with open(config_bundles_dir + '/common/gn_flags.map') as gn_file:
+        gn_flags = _parse_gn_file(gn_file, gn_flags)
+    with open(config_bundles_dir + '/opensuse/gn_flags.map') as gn_file:
+        gn_flags = _parse_gn_file(gn_file, gn_flags)
+    return gn_flags
+
+def _get_parsed_gn_flags(gn_flags):
+    def _shell_line_generator(gn_flags):
+        for key, value in gn_flags.items():
+            yield "myconf_gn+=\" " + _escape_string(key) + "=" + _escape_string(value) + "\""
+    return os.linesep.join(_shell_line_generator(gn_flags))
 
 def main(): #pylint: disable=too-many-branches
     """CLI Entrypoint"""
@@ -172,11 +229,19 @@ def main(): #pylint: disable=too-many-branches
         else:
             shutil.copy(str(actual_path), str(args.destination / relative_path))
 
+    patch_stage_dir = str(args.destination / 'patches')
+    os.mkdir(patch_stage_dir)
+    patch_info = _get_spec_format_patch_list('config_bundles', patch_stage_dir) 
+    gn_map = _get_gn_flag_map('config_bundles')
+
     # Substitute .ungoogin files
     packaging_subs = dict(
         chromium_version=get_chromium_version(),
         release_revision=get_release_revision(),
         current_commit=_get_current_commit(),
+        numbered_patch_list=patch_info['patchString'],
+        apply_patches_cmd=_get_patch_apply_spec_cmd(patch_info['numPatches']),
+        gn_flags=_get_parsed_gn_flags(gn_map)
     )
     _process_templates(args.destination, packaging_subs)
 

@@ -214,6 +214,8 @@ cd ungoogled-chromium-%{version}
 
 $ungoog{apply_patches_cmd}
 
+python3 -m buildkit domains apply -b config_bundles/opensuse -c domainsubcache.tar.gz ./
+
 # Remove bundled libs
 keeplibs=(
     base/third_party/dmg_fp
@@ -297,6 +299,7 @@ keeplibs=(
     third_party/libphonenumber
     third_party/libsecret
     third_party/libsrtp
+    third_party/libsync
     third_party/libudev
     third_party/libusb
     third_party/libwebm
