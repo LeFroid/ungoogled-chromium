@@ -1,9 +1,7 @@
 Source: ungoogled-chromium-browser
 Section: web
 Priority: optional
-Maintainer: ungoogled-chromium Maintainers <github@null>
-Uploaders:
- Maintainer <maintainer@null>,
+Maintainer: ungoogled-chromium Maintainers <github@null.invalid>
 Vcs-Git: https://github.com/Eloston/ungoogled-chromium.git
 Vcs-Browser: https://github.com/Eloston/ungoogled-chromium
 Homepage: https://github.com/Eloston/ungoogled-chromium
@@ -111,6 +109,9 @@ Replaces:
 Breaks:
  chromium,
  chromium-browser,
+ ungoogled-chromium-common (<< ${binary:Version}),
+Replaces:
+ ungoogled-chromium-common (<< ${binary:Version}),
 Description: web browser
  Web browser that aims to build a safer, faster, and more stable internet
  browsing experience.

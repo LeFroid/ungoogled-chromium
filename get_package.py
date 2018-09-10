@@ -25,6 +25,7 @@ from buildkit.third_party import schema
 _ROOT_DIR = Path(__file__).resolve().parent
 _PACKAGING_ROOT = _ROOT_DIR / 'packaging'
 _PKGMETA = _PACKAGING_ROOT / 'pkgmeta.ini'
+_TEMPLATE_SUFFIX = '.ungoogin'
 _PKGMETA_SCHEMA = schema.Schema({
     schema.Optional(schema.And(str, len)): {
         schema.Optional('depends'): schema.And(str, len),
@@ -57,12 +58,14 @@ class _BuildFileStringTemplate(string.Template):
 # Methods
 
 
-def _process_templates(root_dir, build_file_subs):
+def _process_templates(template_files, build_file_subs):
     """
-    Recursively substitute '$ungoog' strings in '.ungoogin' template files and
+    Recursively substitute '$ungoog' strings in template_files and
         remove the suffix
+
+    template_files is an iterable of pathlib.Path
     """
-    for old_path in root_dir.rglob('*.ungoogin'):
+    for old_path in template_files:
         new_path = old_path.with_name(old_path.stem)
         old_path.replace(new_path)
         with new_path.open('r+', encoding=ENCODING) as new_file:
@@ -80,11 +83,10 @@ def _get_current_commit():
 
     Raises BuildkitAbort if invoking git fails.
     """
-    result = subprocess.run(
-        ['git', 'rev-parse', '--verify', 'HEAD'],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-        cwd=str(Path(__file__).resolve().parent))
+    result = subprocess.run(['git', 'rev-parse', '--verify', 'HEAD'],
+                            stdout=subprocess.PIPE,
+                            universal_newlines=True,
+                            cwd=str(Path(__file__).resolve().parent))
     if result.returncode:
         get_logger().error('Unexpected return code %s', result.returncode)
         get_logger().error('Command output: %s', result.stdout)
@@ -197,14 +199,13 @@ def _get_parsed_gn_flags(gn_flags):
             yield "myconf_gn+=\" " + _escape_string(key) + "=" + _escape_string(value) + "\""
     return os.linesep.join(_shell_line_generator(gn_flags))
 
-def main(): #pylint: disable=too-many-branches
-    """CLI Entrypoint"""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('name', help='Name of packaging to generate')
-    parser.add_argument('destination', type=Path, help='Directory to store packaging files')
-    args = parser.parse_args()
+def _validate_and_get_args(parser):
+    """
+    Helper for main()
 
-    # Argument validation
+    Validates and returns arguments
+    """
+    args = parser.parse_args()
     if not args.destination.parent.exists():
         parser.error('Destination parent directory "{}" does not exist'.format(
             args.destination.parent))
@@ -215,26 +216,56 @@ def main(): #pylint: disable=too-many-branches
         parser.error('Packaging "{}" does not exist'.format(args.name))
     if not _PKGMETA.exists(): #pylint: disable=no-member
         parser.error('Cannot find pkgmeta.ini in packaging directory')
+    return args
+
+
+def _copy_buildkit_files(args, pkgmeta, files, dirs):
+    """Helper for main()"""
+    buildkit_copy_relative = _get_buildkit_copy(args.name, pkgmeta)
+    if buildkit_copy_relative is None:
+        return
+    for file_name in files:
+        if not (args.destination / buildkit_copy_relative).exists():
+            (args.destination / buildkit_copy_relative).mkdir()
+        shutil.copy(
+            str(_ROOT_DIR / file_name), str(args.destination / buildkit_copy_relative / file_name))
+    for dir_name in dirs:
+        if (args.destination / buildkit_copy_relative / dir_name).exists():
+            shutil.rmtree(str(args.destination / buildkit_copy_relative / dir_name))
+        shutil.copytree(
+            str(_ROOT_DIR / dir_name), str(args.destination / buildkit_copy_relative / dir_name))
+
+
+def main():
+    """CLI Entrypoint"""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('name', help='Name of packaging to generate')
+    parser.add_argument('destination', type=Path, help='Directory to store packaging files')
+    args = _validate_and_get_args(parser)
 
     if not args.destination.exists():
         args.destination.mkdir()
 
     # Copy packaging files to destination
     pkgmeta = validate_and_get_ini(_PKGMETA, _PKGMETA_SCHEMA)
+    template_files = set()
     for relative_path, actual_path in _get_package_files(_get_package_dir_list(args.name, pkgmeta)):
+        target_path = args.destination / relative_path
         if actual_path.is_dir():
-            if not (args.destination / relative_path).exists():
-                (args.destination / relative_path).mkdir()
-            shutil.copymode(str(actual_path), str(args.destination / relative_path))
+            if not target_path.exists():
+                target_path.mkdir()
+            shutil.copymode(str(actual_path), str(target_path))
         else:
-            shutil.copy(str(actual_path), str(args.destination / relative_path))
+            shutil.copy(str(actual_path), str(target_path))
+            if target_path.suffix.lower() == _TEMPLATE_SUFFIX:
+                template_files.add(target_path)
 
     patch_stage_dir = str(args.destination / 'patches')
     os.mkdir(patch_stage_dir)
     patch_info = _get_spec_format_patch_list('config_bundles', patch_stage_dir) 
     gn_map = _get_gn_flag_map('config_bundles')
 
-    # Substitute .ungoogin files
+    # Substitute template files
     packaging_subs = dict(
         chromium_version=get_chromium_version(),
         release_revision=get_release_revision(),
@@ -243,30 +274,14 @@ def main(): #pylint: disable=too-many-branches
         apply_patches_cmd=_get_patch_apply_spec_cmd(patch_info['numPatches']),
         gn_flags=_get_parsed_gn_flags(gn_map)
     )
-    _process_templates(args.destination, packaging_subs)
+    _process_templates(template_files, packaging_subs)
 
     # Copy buildkit and config files, if necessary
-    buildkit_copy_relative = _get_buildkit_copy(args.name, pkgmeta)
-    if buildkit_copy_relative:
-        if not (args.destination / buildkit_copy_relative).exists():
-            (args.destination / buildkit_copy_relative).mkdir()
-        shutil.copy(
-            str(_ROOT_DIR / 'version.ini'),
-            str(args.destination / buildkit_copy_relative / 'version.ini'))
-        if (args.destination / buildkit_copy_relative / 'buildkit').exists():
-            shutil.rmtree(str(args.destination / buildkit_copy_relative / 'buildkit'))
-        shutil.copytree(
-            str(_ROOT_DIR / 'buildkit'),
-            str(args.destination / buildkit_copy_relative / 'buildkit'))
-        if (args.destination / buildkit_copy_relative / 'patches').exists():
-            shutil.rmtree(str(args.destination / buildkit_copy_relative / 'patches'))
-        shutil.copytree(
-            str(_ROOT_DIR / 'patches'), str(args.destination / buildkit_copy_relative / 'patches'))
-        if (args.destination / buildkit_copy_relative / 'config_bundles').exists():
-            shutil.rmtree(str(args.destination / buildkit_copy_relative / 'config_bundles'))
-        shutil.copytree(
-            str(_ROOT_DIR / 'config_bundles'),
-            str(args.destination / buildkit_copy_relative / 'config_bundles'))
+    _copy_buildkit_files(
+        args,
+        pkgmeta,
+        files=('version.ini', 'run_buildkit_cli.py'),
+        dirs=('buildkit', 'config_bundles', 'patches'))
 
 
 if __name__ == '__main__':

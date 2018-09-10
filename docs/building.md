@@ -21,12 +21,20 @@ For configurations, you may try augmenting the standard Chromium build procedure
 
 ## Debian and its derivatives
 
-
 These instructions will create `.deb` packages. It uses ungoogled-chromium's variation of Debian's `debian` directory.
 
-The build should work on the CPU architectures `amd64`, `i386`, `arm64`, and `armhf`.
+The build should work on CPU architecture `amd64`
 
-The final size of the sandbox with build artifacts is over 5 GB. On systems with enough RAM, it can be built entirely within `tmpfs` without swap memory.
+* `i386`, `arm64`, `armhf`, and cross-compilation are unsupported at this time due to the lack of contributors.
+
+The final size of the sandbox with build artifacts is over 5 GB. On 64-bit systems with enough RAM, it can be built entirely within `tmpfs` without swap memory.
+
+### Hardware requirements
+
+* For 64-bit systems, at least 8 GB of RAM is highly recommended (as recommended in the Chromium source tree under `docs/linux_build_instructions.md`).
+    * It may be possible to reduce RAM comsumption with a lower value for the GN flag `jumbo_file_merge_limit` (documented in the Chromium source code under `docs/jumbo.md`).
+    * Debian's `chromium` package version `69.0.3497.81-1` uses a value of: 12
+* Filesystem space: 8 GB is the bare minimum. More is safer.
 
 ### Setting up the build environment
 
@@ -37,6 +45,7 @@ On Debian 9 (stretch), `stretch-backports` APT source is used to obtain LLVM 6.0
 ### Building locally
 
 ```sh
+# Run from inside the clone of the repository
 mkdir -p build/src
 ./get_package.py PACKAGE_TYPE_HERE build/src/debian
 cd build/src
@@ -59,14 +68,14 @@ Packages will appear under `build/`.
 ### Building via source package
 
 ```sh
+# Run from inside the clone of the repository
 mkdir -p build/src
 ./get_package.py PACKAGE_TYPE_HERE build/src/debian
 cd build/src
 # If necessary, change the dependencies in debian/control to accomodate your environment.
 # If necessary, modify AR, NM, CC, and CXX variables in debian/rules
 debian/rules get-orig-source
-cd ..
-dpkg-source -b src
+debuild -S -sa
 ```
 
 (`PACKAGE_TYPE_HERE` is the same as above)
@@ -75,9 +84,9 @@ Source package files should appear in `build/`
 
 ## Windows
 
-Google only supports [Windows 7 x64 or newer](https://chromium.googlesource.com/chromium/src/+/64.0.3282.168/docs/windows_build_instructions.md#system-requirements). These instructions are tested on Windows 10 Home x64.
+Google only supports [Windows 7 x64 or newer](https://chromium.googlesource.com/chromium/src/+/64.0.3282.168/docs/windows_build_instructions.md#system-requirements). These instructions are tested on Windows 7 Professional x64.
 
-NOTE: The default configuration will build 64-bit binaries for maximum security (TODO: Link some explanation). This can be changed to 32-bit by changing `target_cpu` to `"x32"` (*with* quotes) in the user config bundle GN flags config file (default path is `buildspace/user_bundle/gn_flags.map`
+NOTE: The default configuration will build 64-bit binaries for maximum security (TODO: Link some explanation). This can be changed to 32-bit by following the instructions in `build.py`
 
 ### Setting up the build environment
 
@@ -96,44 +105,33 @@ When installing the SDK, the "Debugging Tools for Windows" feature must be enabl
 1. Setup the following:
 
     * 7-zip
-    * Python 2.7 for scripts in Chromium, with pypiwin32 module (`pip install pypiwin32`)
-    * Python 3.5+ for buildkit
+    * Python 2.7 (for scripts in the Chromium source tree), with pypiwin32 module (`pip install pypiwin32`)
+    * Python 3.5+ (for build and packaging scripts used below)
 
-2. Make sure Python 2.7 is accessible in `PATH` as `python`.
+2. Make sure Python 2.7 is set in the user or system environment variable `PATH` as `python`.
 
-### Setting up the buildspace tree and packaging files
+### Setup and build
 
-Setting up via CMD:
+NOTE: The commands below assume the `py` command was installed by Python 3 into `PATH`. If this is not the case, then substitute it with the command to invoke **Python 3**.
 
+Run in `cmd.exe`:
+
+```cmd
+mkdir build\src
+py get_package.py windows build\src\ungoogled_packaging
+cd build\src
+py ungoogled_packaging\build.py
+py ungoogled_packaging\package.py
 ```
-mkdir buildspace\downloads
-py buildkit-launcher.py genbun windows
-py buildkit-launcher.py getsrc
-py buildkit-launcher.py subdom
-py buildkit-launcher.py genpkg windows
-```
 
-The buildspace tree can be relocated to another system for building if necessary.
-
-### Invoking build
-
-1. In a CMD instance, apply patches:
-
-    ```
-    py buildspace\tree\ungoogled_packaging\scripts\apply_patch_series.py
-    ```
-
-2. Run build script: `buildspace\tree\ungoogled_packaging\build.bat`
-3. Run packaging script: `buildspace\tree\ungoogled_packaging\package.bat`
-    * A zip archive will be created in `buildspace\tree\ungoogled_packaging\`
+A zip archive will be created in `build\src`
 
 ## macOS
 
-Tested on macOS 10.11-10.13
+### Software requirements
 
-### Additional Requirements
-
-* Xcode 7-9
+* macOS 10.12+
+* Xcode 8-9
 * Homebrew
 * Perl (for creating a `.dmg` package)
 
@@ -145,6 +143,7 @@ Tested on macOS 10.11-10.13
 ### Building
 
 ```sh
+# Run from inside the clone of the repository
 mkdir -p build/src/ungoogled_packaging
 ./get_package.py macos build/src/ungoogled_packaging
 cd build/src
@@ -186,6 +185,7 @@ As of Chromium 66.0.3359.117, llvm, lld and clang version 6 or greater is requir
 Before executing the following commands, make sure you are using python 3.6 as was mentioned in the build environment section of this guide.
 
 ```sh
+# Run from inside the clone of the repository
 mkdir -p build/{download_cache,src}
 # TODO: The download commands should be moved into the packaging scripts
 ./get_package.py opensuse build/src/ungoogled_packaging
@@ -211,6 +211,7 @@ EOF
 ### Invoking build and installing package
 
 ```sh
+# Run from inside the clone of the repository
 cd build/src
 ./ungoogled_packaging/setup.sh
 cd ~/rpm
@@ -223,7 +224,13 @@ The RPM will be located in `~/rpm/RPMS/{arch}/` once rpmbuild has finished. It c
 
 These instructions will build packages compatible with any Linux distribution that Chromium supports. Unlike distro-specific packages, they are portable and have minimal dependencies with system libraries (just as in regular Chromium).
 
-### Requirements
+### Hardware requirements
+
+* For 64-bit systems, at least 8 GB of RAM is highly recommended (per the document in the Chromium source tree under `docs/linux_build_instructions.md`).
+    * It may be possible to reduce RAM comsumption with a lower value for the GN flag `jumbo_file_merge_limit` (documented in the Chromium source code under `docs/jumbo.md`).
+* At least 8 GB of filesystem space. 16 GB should be safe.
+
+### Software requirements
 
 TODO: Document all libraries and tools needed to build. For now, see the build dependencies for Debian systems.
 
@@ -234,11 +241,13 @@ TODO: Document all libraries and tools needed to build. For now, see the build d
 
 For Debian-based systems, these can be installed via apt: `# apt install clang-6.0 lld-6.0 llvm-6.0-dev python python3 ninja-build`
 
-* Some systems, like Debian 9 (stretch), need their backports repo enabled.
+* Some systems, like Debian 9 (stretch), don't include LLVM tools in the default repositories. Debian 9 (stretch) has LLVM 6.0 in the backports repository.
+* Alternatively for systems where backports is not an option, LLVM tools can be installed after adding [the LLVM APT repo](//apt.llvm.org/).
 
 ### Build a tar archive
 
 ```sh
+# Run from inside the clone of the repository
 mkdir -p build/src
 ./get_package.py linux_simple build/src/ungoogled_packaging
 cd build/src
