@@ -61,6 +61,7 @@ BuildRequires:  cups-devel
 BuildRequires:  desktop-file-utils
 BuildRequires:  fdupes
 BuildRequires:  flex
+BuildRequires:  gn
 BuildRequires:  gperf
 BuildRequires:  hicolor-icon-theme
 BuildRequires:  libcap-devel
@@ -238,6 +239,7 @@ keeplibs=(
     net/third_party/quic
     net/third_party/spdy
     third_party/WebKit
+    third_party/abseil-cpp
     third_party/analytics
     third_party/angle
     third_party/apple_apsl
@@ -249,6 +251,9 @@ keeplibs=(
     third_party/angle/third_party/glslang
     third_party/angle/third_party/spirv-headers
     third_party/angle/third_party/spirv-tools
+    third_party/angle/third_party/vulkan-headers
+    third_party/angle/third_party/vulkan-loader
+    third_party/angle/third_party/vulkan-tools
     third_party/angle/third_party/vulkan-validation-layers
     third_party/blink
     third_party/boringssl
@@ -317,6 +322,7 @@ keeplibs=(
     third_party/openmax_dl
     third_party/opus
     third_party/ots
+    third_party/perfetto
     third_party/pdfium
     third_party/pdfium/third_party/agg23
     third_party/pdfium/third_party/base
@@ -460,9 +466,7 @@ myconf_gn+=" use_system_freetype=true"
 %endif
 $ungoog{gn_flags}
 
-tools/gn/bootstrap/bootstrap.py -v --gn-gen-args "${myconf_gn}"
-
-out/Release/gn gen out/Default --args="${myconf_gn}"
+gn gen out/Default --args="${myconf_gn}"
 
 ninja -v -C out/Default chrome chrome_sandbox chromedriver
 
