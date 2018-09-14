@@ -16,7 +16,6 @@ if sys.version_info.major < 3:
 import argparse
 import os
 import re
-import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -56,9 +55,14 @@ def _run_build_process(*args, **kwargs):
     Runs the subprocess with the correct environment variables for building
     """
     # Add call to set VC variables
-    cmd_input = [' '.join(('call', shlex.quote(str(_get_vcvars_path()))))]
-    cmd_input.append(' '.join(map(shlex.quote, args)))
-    subprocess.run('cmd.exe', input='\n'.join(cmd_input), check=True, **kwargs)
+    cmd_input = ['call "%s" >nul' % _get_vcvars_path()]
+    cmd_input.append(' '.join(map('"{}"'.format, args)))
+    cmd_input.append('exit\n')
+    subprocess.run(('cmd.exe', '/k'),
+                   input='\n'.join(cmd_input),
+                   check=True,
+                   encoding=ENCODING,
+                   **kwargs)
 
 
 def _test_python2(error_exit):
@@ -165,14 +169,10 @@ def main():
     # Output args.gn
     (source_tree / 'out/Default').mkdir(parents=True)
     (source_tree / 'out/Default/args.gn').write_text('\n'.join(bundle.gn_flags), encoding=ENCODING)
-    (source_tree / 'out/gn_build').mkdir(parents=True)
-    (source_tree / 'out/gn_build/args.gn').write_text('\n'.join(bundle.gn_flags), encoding=ENCODING)
 
     # Run GN bootstrap
     _run_build_process(
-        shutil.which('python'), 'tools\\gn\\bootstrap\\bootstrap.py', '-o'
-        'out\\Default\\gn.exe', '--build-path', 'out\\gn_build')
-    shutil.rmtree('out\\gn_build')
+        shutil.which('python'), 'tools\\gn\\bootstrap\\bootstrap.py', '-o', 'out\\Default\\gn.exe')
 
     # Run gn gen
     _run_build_process('out\\Default\\gn.exe', 'gen', 'out\\Default', '--fail-on-unused-args')
