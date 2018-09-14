@@ -10,7 +10,7 @@ UNGOOGLED_DIR=$(dirname $(readlink -f $0))/../../../
 
 pushd $PACKAGING_DIR
 mkdir $DOWNLOAD_CACHE
-cp -R $UNGOOGLED_DIR/buildkit ./buildkit
+cp -R $UNGOOGLED_DIR/buildkit .
 cp -R $UNGOOGLED_DIR/config_bundles .
 cp $UNGOOGLED_DIR/version.ini .
 python3 -m buildkit downloads retrieve -b config_bundles/$BUNDLE -c $DOWNLOAD_CACHE
@@ -30,6 +30,6 @@ popd
 cp $PACKAGING_DIR/ungoogled-chromium.spec ~/rpm/SPECS/
 
 mv $PACKAGING_DIR/buildkit ..
-mv $PACKING_DIR/config_bundles ..
-mv $PACKING_DIR/version.ini ..
+mv $PACKAGING_DIR/config_bundles ..
+mv $PACKAGING_DIR/version.ini ..
 mv $PACKAGING_DIR/.. ~/rpm/BUILD/tree

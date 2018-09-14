@@ -1,0 +1,10 @@
+--- a/v8/src/base/safe_math_impl.h        2018-09-13 17:10:54.309614863 -0400
++++ b/v8/src/base/safe_math_impl.h        2018-09-13 17:11:33.369374678 -0400
+@@ -16,6 +16,7 @@
+ 
+ #include "src/base/macros.h"
+ #include "src/base/safe_conversions.h"
++#include "src/globals.h"
+ 
+ namespace v8 {
+ namespace base {

@@ -3,6 +3,7 @@ gold_path=""
 goma_dir=""
 host_toolchain="//build/toolchain/linux/unbundle:default"
 is_component_build=false
+clang_base_path="/usr"
 is_component_ffmpeg=true
 link_pulseaudio=true
 linux_use_bundled_binutils=false
