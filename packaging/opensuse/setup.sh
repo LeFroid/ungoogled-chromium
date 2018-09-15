@@ -22,6 +22,7 @@ python3 -m buildkit prune -b config_bundles/$BUNDLE ../
 popd
 
 cp -r $PACKAGING_DIR/patches/* ~/rpm/SOURCES/
+cp $PACKAGING_DIR/sources_template/* ~/rpm/SOURCES/
 
 pushd $PACKAGING_DIR/chromium-icons_contents
 tar cjf ~/rpm/SOURCES/chromium-icons.tar.bz2 *
@@ -29,7 +30,4 @@ popd
 
 cp $PACKAGING_DIR/ungoogled-chromium.spec ~/rpm/SPECS/
 
-mv $PACKAGING_DIR/buildkit ..
-mv $PACKAGING_DIR/config_bundles ..
-mv $PACKAGING_DIR/version.ini ..
 mv $PACKAGING_DIR/.. ~/rpm/BUILD/tree
