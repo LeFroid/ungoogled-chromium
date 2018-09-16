@@ -1,4 +1,5 @@
 ungoogled-chromium/linux/use-system-libraries-in-official-build.patch
+ungoogled-chromium/remove-fcomplete-member-pointers-cflag.patch
 
 opensuse/master-preferences.patch
 opensuse/fix-kernel-user-namespace-crash.patch

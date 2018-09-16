@@ -217,10 +217,6 @@ $ungoog{apply_patches_cmd}
 
 python3 -m buildkit domains apply -b config_bundles/opensuse -c domainsubcache.tar.gz ./
 
-# Copy the toolchain settings
-mkdir toolchain
-cp %{SOURCE1} toolchain/BUILD.gn
-
 # Remove bundled libs
 keeplibs=(
     base/third_party/dmg_fp
@@ -244,7 +240,6 @@ keeplibs=(
     net/third_party/spdy
     third_party/WebKit
     third_party/abseil-cpp
-    third_party/analytics
     third_party/angle
     third_party/apple_apsl
     third_party/angle/src/common/third_party/base
