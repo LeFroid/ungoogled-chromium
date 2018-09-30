@@ -55,11 +55,11 @@ Most of the **additional** features are as follows:
 * Add new command-line switches and `chrome://flags` entries:
     * `--disable-beforeunload` - (Not in `chrome://flags`) Disables JavaScript dialog boxes triggered by `beforeunload`
     * `--disable-search-engine-collection` - Disable automatic search engine scraping from webpages.
-    * `--dns-over-https-server` (from Bromite) - Specify a HTTPS endpoint for and enable DNS over HTTPS.
     * `--enable-stacked-tab-strip` and `--enable-tab-adjust-layout` - These flags adjust the tab strip behavior. `--enable-stacked-tab-strip` is also configurable in `chrome://flags` Please note that they are not well tested, so proceed with caution.
     * `--extension-mime-request-handling` - Change how extension MIME types (CRX and user scripts) are handled. Acceptable values are `download-as-regular-file` or `install-always`. Leave unset to use normal behavior. It is also configurable under `chrome://flags`
     * `--fingerprinting-canvas-measuretext-noise` (Added flag to Bromite feature) - Scale the output values of Canvas::measureText() with a randomly selected factor in the range -0.0003% to 0.0003%, which are recomputed on every document initialization.
     * `--fingerprinting-client-rects-noise` (Added flag to Bromite feature) - Implements fingerprinting deception of JS APIs `getClientRects()` and `getBoundingClientRect()` by scaling their output values with a random factor in the range -0.0003% to 0.0003%, which are recomputed for every document instantiation.
+    * `--fingerprinting-canvas-image-data-noise` (Added flag to Bromite feature) - Implements fingerprinting deception for Canvas image data retrieved via JS APIs. In the data, at most 10 pixels are slightly modified.
     * `--max-connections-per-host` (from Bromite) - Configure the maximum allowed connections per host.
     * `--set-ipv6-probe-false` - (Not in `chrome://flags`) Forces the result of the browser's IPv6 probing (i.e. IPv6 connectivity test) to be unsuccessful. This causes IPv4 addresses to be prioritized over IPv6 addresses. Without this flag, the probing result is set to be successful, which causes IPv6 to be used over IPv4 when possible.
 * Force all pop-ups into tabs
@@ -93,7 +93,7 @@ Other platforms are discussed and tracked in GitHub's Issue Tracker. Learn more 
 
 [Website source code and contribution instructions](//github.com/ungoogled-software/ungoogled-chromium-binaries)
 
-The release versioning scheme follows that of the tags. See the next section for more details.
+The release versioning scheme follows that of the tags. Please see [Getting the source code](#getting-the-source-code) section for more details.
 
 ### Alternative installation methods
 
@@ -165,7 +165,7 @@ Guidelines:
 
 2. New features should live behind a setting that is **off by default**.
 
-    * Settings are usually added via a command-line flag and `chrome://flags` enties. See [the relevant section in docs/developing.md](docs/developing.md#adding-command-line-flags-and-chromeflags-options) for more information.
+    * Settings are usually added via a command-line flag and `chrome://flags` entries. See [the relevant section in docs/developing.md](docs/developing.md#adding-command-line-flags-and-chromeflags-options) for more information.
     * Unless there are significant benefits, adding the setting to `chrome://settings` is *not recommended* due to the additional maintenance required (caused by the infrastructure that backs preferences).
 
 **NOTE**: In the event that the codebase changes significantly for a non-essential patch (i.e. a patch that does not contribute to the main objectives of ungoogled-chromium), it will be removed until someone updates it.

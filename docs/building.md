@@ -67,6 +67,8 @@ Packages will appear under `build/`.
 
 ### Building via source package
 
+To build via a Debian source package (i.e. `.dsc`, `.orig.tar.xz`, and `.debian.tar.xz`). This is useful for online build services like Launchpad and openSUSE Build Service.
+
 ```sh
 # Run from inside the clone of the repository
 mkdir -p build/src
@@ -237,12 +239,12 @@ TODO: Document all libraries and tools needed to build. For now, see the build d
 * Python 3 (tested on 3.5) for buildkit
 * Python 2 (tested on 2.7) for building GN and running other build-time scripts
 * [Ninja](//ninja-build.org/) for running the build command
-* LLVM 6.0 (including Clang and LLD)
+* LLVM 7.0 or 8.0 (including Clang and LLD)
 
-For Debian-based systems, these can be installed via apt: `# apt install clang-6.0 lld-6.0 llvm-6.0-dev python python3 ninja-build`
+For Debian-based systems:
 
-* Some systems, like Debian 9 (stretch), don't include LLVM tools in the default repositories. Debian 9 (stretch) has LLVM 6.0 in the backports repository.
-* Alternatively for systems where backports is not an option, LLVM tools can be installed after adding [the LLVM APT repo](//apt.llvm.org/).
+1. Add the [the LLVM APT repo](//apt.llvm.org/) for the appropriate LLVM version.
+2. `# apt install clang-7.0 lld-7.0 llvm-7.0-dev python python3 ninja-build`
 
 ### Build a tar archive
 

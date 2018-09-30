@@ -33,11 +33,12 @@ try:
 except ImportError:
 
     class _FakeRequests:
-        """Dummy requests that throws NotImplementedError"""
+        """Pseudo requests module that throws RuntimeError"""
 
         @classmethod
         def _not_implemented(cls):
-            raise NotImplementedError('"requests" module is required for remote file downloading')
+            raise RuntimeError('The Python module "requests" is required for remote'
+                               'file downloading. It can be installed from PyPI.')
 
         @classmethod
         def get(cls, *_, **__):
@@ -58,6 +59,7 @@ except ImportError:
 
 _CONFIG_BUNDLES_PATH = Path(__file__).parent.parent / 'config_bundles'
 _PATCHES_PATH = Path(__file__).parent.parent / 'patches'
+_SRC_PATH = Path('src')
 
 
 class _PatchValidationError(Exception):
@@ -284,7 +286,7 @@ class _FallbackRepoManager:
         except ValueError:
             pass
         else:
-            if current_node is root_deps_tree[Path('src')]:
+            if current_node is root_deps_tree[_SRC_PATH]:
                 get_logger().info('Redirecting to GN repo version %s for path: %s', self.gn_version,
                                   current_relative_path)
                 return (self._GN_REPO_URL, self.gn_version, new_relative_path)
@@ -373,8 +375,8 @@ def _initialize_deps_tree():
     download_session is an active requests.Session() object
     """
     root_deps_tree = {
-        Path('src'): ('https://chromium.googlesource.com/chromium/src.git', get_chromium_version(),
-                      'DEPS')
+        _SRC_PATH: ('https://chromium.googlesource.com/chromium/src.git', get_chromium_version(),
+                    'DEPS')
     }
     return root_deps_tree
 
@@ -615,9 +617,15 @@ def _apply_child_bundle_patches(child_path, had_failure, file_layers, patch_cach
                 break
         if branch_validation_failed != patches_outdated:
             # Metadata for patch validity is out-of-date
-            get_logger().error(
-                ('%s patch validity is inconsistent with patches_outdated marking in bundlemeta. '
-                 'Please update patches or change marking.'), child_path.name)
+            if branch_validation_failed:
+                get_logger().error(("%s patches have become outdated. "
+                                    "Please update the patches, or add 'patches_outdated = true' "
+                                    "to its bundlemeta.ini"), child_path.name)
+            else:
+                get_logger().error(
+                    ('"%s" is no longer out-of-date! '
+                     'Please remove the patches_outdated marking from its bundlemeta.ini'),
+                    child_path.name)
             had_failure = True
     return had_failure, branch_validation_failed
 
@@ -647,7 +655,7 @@ def _test_patches(patch_trie, bundle_cache, patch_cache, orig_files):
         # Add storage for child's patched files
         file_layers = file_layers.new_child()
         # Apply children's patches
-        get_logger().info('Verifying at depth %s: %s', len(node_iter_stack), child_path.name)
+        get_logger().info('Verifying at depth %s: %s ...', len(node_iter_stack), child_path.name)
 
         # Potential optimization: Use interval tree data structure instead of copying
         # the entire array to track only diffs
@@ -727,12 +735,19 @@ def main():
         '-v', '--verbose', action='store_true', help='Log more information to stdout/stderr')
     file_source_group = parser.add_mutually_exclusive_group(required=True)
     file_source_group.add_argument(
-        '-l', '--local', type=Path, metavar='DIRECTORY', help='Use a local source tree')
+        '-l',
+        '--local',
+        type=Path,
+        metavar='DIRECTORY',
+        help=
+        'Use a local source tree. It must be UNMODIFIED, otherwise the results will not be valid.')
     file_source_group.add_argument(
         '-r',
         '--remote',
         action='store_true',
-        help='Download the required source tree files from Google')
+        help=('Download the required source tree files from Google. '
+              'This feature requires the Python module "requests". If you do not want to '
+              'install this, consider using --local instead.'))
     file_source_group.add_argument(
         '-c',
         '--cache-remote',
@@ -765,9 +780,12 @@ def main():
     orig_files = _get_orig_files(args, required_files, parser)
     had_failure = _test_patches(patch_trie, bundle_cache, patch_cache, orig_files)
     if had_failure:
+        get_logger().error('***FAILED VALIDATION; SEE ABOVE***')
         if not args.verbose:
             get_logger().info('(For more error details, re-run with the "-v" flag)')
         parser.exit(status=1)
+    else:
+        get_logger().info('Passed validation')
 
 
 if __name__ == '__main__':
