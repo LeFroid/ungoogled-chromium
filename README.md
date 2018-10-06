@@ -2,22 +2,23 @@
 
 *Bringing back the "Don't" in "Don't be evil"*
 
-**ungoogled-chromium is Google Chromium**, sans integration with Google. It also features some changes to enhance privacy, control, and transparency.
+**ungoogled-chromium is Google Chromium**, sans integration with Google. It also features some tweaks to enhance privacy, control, and transparency *(almost all of which require manual activation or enabling)*.
+
+**ungoogled-chromium retains the default Chromium experience as closely as possible**. Unlike other Chromium forks that have their own visions of a web browser, ungoogled-chromium is essentially a drop-in replacement for Chromium.
 
 ## Motivation and Description
 
 A number of features or background services communicate with Google servers despite the absence of an associated Google account or compiled-in Google API keys. Furthermore, the normal build process for Chromium involves running Google's own high-level commands that invoke many scripts and utilities, some of which download and use pre-built binaries provided by Google. Even the final build output includes some pre-built binaries. Fortunately, the source code is available for everything.
 
-ungoogled-chromium is a set of configuration flags, patches, and custom scripts. These components altogether strive to accomplish the following:
+From a technical standpoint, ungoogled-chromium is a set of configuration flags, patches, and custom scripts. These components altogether strive to accomplish the following:
+
 * Disable or remove offending services and features that communicate with Google or weaken privacy
 * Strip binaries from the source tree, and use those provided by the system or build them from source
-* Disable features that inhibit control and transparency, and add or modify features that promote them (these changes are minor and do not have significant impacts on the general user experience)
-
-**ungoogled-chromium should not be considered a fork of Chromium**. The main reason for this is that a fork is associated with more significant deviations from the Chromium, such as branding, configuration formats, file locations, and other interface changes. ungoogled-chromium will not modify the Chromium browser outside of the project's goals.
+* Disable features that inhibit control and transparency, and add or modify features that promote them (these changes will almost always require manual activation or enabling).
 
 Since these goals and requirements are not precise, unclear situations are discussed and decided on a case-by-case basis.
 
-**ungoogled-chromium is looking for contributors**. See the [Contributing, Reporting, Contacting](#contributing-reporting-contacting) section for more information.
+**ungoogled-chromium always welcomes more help!** See the [docs/contributing.md](docs/contributing.md) document for more information.
 
 ## Table of Contents
 
@@ -29,9 +30,6 @@ Since these goals and requirements are not precise, unclear situations are discu
 * [Design and implementation](#design-and-implementation)
 * [Building](#building)
 * [**Contributing, Reporting, Contacting**](#contributing-reporting-contacting)
-    * [How to help](#how-to-help)
-    * [Submitting changes](#submitting-changes)
-    * [Criteria for new features](#criteria-for-new-features)
 * [Credits](#credits)
 * [License](#license)
 
@@ -126,49 +124,8 @@ Not all tags are stable for all platforms. See the [Statuses in the Wiki](//ungo
 
 ## Contributing, Reporting, Contacting
 
-Please submit feedback (i.e. problems, suggestions, and questions) to the [Issue Tracker](//github.com/Eloston/ungoogled-chromium/issues). The Issue Tracker is the main hub for development activity.
-
-There are chat room options available via [Gitter](https://gitter.im/ungoogled-software/Lobby) and Matrix.org (name `ungoogled-software/lobby`, which has bidirectional connection with Gitter). They are optional; it is only provided for those who prefer this format.
-
-Subsections of this section:
-
-* [How to help](#how-to-help)
-* [Submitting changes](#submitting-changes)
-* [Criteria for new features](#criteria-for-new-features)
-
-### How to help
-
-Anyone is free to help others in need of support in the Issue Tracker.
-
-Issues marked with the `help wanted` tag are changes that needs discussion or assistance.
-
-* If it requires new code, please read through the [Submitting changes](#submitting-changes) section below.
-* If you want to work on an issue, please state your intent to do so first to let others know.
-
-If there are fixes, tweaks, or additions you want to make, continue onto the following section.
-
-### Submitting changes
-
-Please submit all changes via Pull Requests.
-
-Guidelines:
-
-* You are welcome to submit minor changes, such as bug fixes, documentation fixes, and tweaks.
-* If you want to submit a new feature, please read through the [Criteria for new features](#criteria-for-new-features) below.
-* When in doubt about the acceptance of a change, you are welcome to ask via an issue first.
-
-### Criteria for new features
-
-1. New features should not detract from the default Chromium experience, unless it falls under the project's main objectives (i.e. removing Google integration and enhancing privacy).
-
-    * For larger features, please propose them via an issue first.
-
-2. New features should live behind a setting that is **off by default**.
-
-    * Settings are usually added via a command-line flag and `chrome://flags` entries. See [the relevant section in docs/developing.md](docs/developing.md#adding-command-line-flags-and-chromeflags-options) for more information.
-    * Unless there are significant benefits, adding the setting to `chrome://settings` is *not recommended* due to the additional maintenance required (caused by the infrastructure that backs preferences).
-
-**NOTE**: In the event that the codebase changes significantly for a non-essential patch (i.e. a patch that does not contribute to the main objectives of ungoogled-chromium), it will be removed until someone updates it.
+* For reporting and contating, see [SUPPORT.md](SUPPORT.md)
+* For contributing (e.g. how to help, submitting changes, criteria for new features), see [docs/contributing.md](docs/contributing.md)
 
 ## Credits
 
